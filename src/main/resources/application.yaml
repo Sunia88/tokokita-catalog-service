@@ -14,7 +14,20 @@ spring:
   config:
     activate:
       on-profile: dev
+  docker:
+    compose:
+      enabled: true
+      lifecycle-management: start-and-stop
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:catalog}
+    username: ${POSTGRES_USER:catalog}
+    password: ${POSTGRES_PASSWORD:catalog}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
 logging:
   level:
     id.tokokita: DEBUG
-

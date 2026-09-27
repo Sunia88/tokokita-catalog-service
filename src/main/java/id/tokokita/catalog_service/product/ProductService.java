@@ -1,53 +1,62 @@
 package id.tokokita.catalog_service.product;
 
-import java.math.BigDecimal;
+import id.tokokita.catalog_service.product.dto.ProductCreateRequest;
+import id.tokokita.catalog_service.product.dto.ProductResponse;
+import id.tokokita.catalog_service.product.dto.ProductUpdateRequest;
+import id.tokokita.catalog_service.product.entity.ProductEntity;
+import id.tokokita.catalog_service.product.entity.ProductRepository;
+import id.tokokita.catalog_service.product.mapper.ProductMapper;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class
-ProductService {
+@Transactional(readOnly = true)
+public class ProductService {
 
-    private final Map<Long, Product> products = new ConcurrentHashMap<>();
-    private final AtomicLong nextId = new AtomicLong(1);
+    private final ProductRepository productRepository;
 
-    public List<Product> findAll() {
-        return List.copyOf(products.values());
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
-    public Product getById(Long id) {
-        return findById(id)
+    public List<ProductResponse> findAll() {
+        return productRepository.findAll().stream().map(ProductMapper::toResponse).toList();
+    }
+
+    public ProductResponse getById(Long id) {
+        return ProductMapper.toResponse(findEntityById(id));
+    }
+
+    @Transactional
+    public ProductResponse create(ProductCreateRequest request) {
+        ProductEntity entity = ProductMapper.toEntity(request);
+        return ProductMapper.toResponse(productRepository.save(entity));
+    }
+
+    @Transactional
+    public ProductResponse update(Long id, ProductUpdateRequest request) {
+        ProductEntity entity = findEntityById(id);
+        if (!entity.getVersion().equals(request.version())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Product was modified by another transaction");
+        }
+        entity.update(request.name(), request.price(), request.category());
+        return ProductMapper.toResponse(productRepository.save(entity));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        ProductEntity entity = findEntityById(id);
+        productRepository.delete(entity);
+    }
+
+    private ProductEntity findEntityById(Long id) {
+        return productRepository
+                .findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Product not found: " + id));
-    }
-
-    public Optional<Product> findById(Long id) {
-        return Optional.ofNullable(products.get(id));
-    }
-
-    public Product create(String name, BigDecimal price, String category) {
-        long id = nextId.getAndIncrement();
-        Product product = new Product(id, name, price, category);
-        products.put(id, product);
-        return product;
-    }
-
-    public Product update(Long id, String name, BigDecimal price, String category) {
-        getById(id);
-        Product updated = new Product(id, name, price, category);
-        products.put(id, updated);
-        return updated;
-    }
-
-    public void delete(Long id) {
-        if (products.remove(id) == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found: " + id);
-        }
     }
 }

@@ -1,4 +1,4 @@
-package id.tokokita.catalog_service.product;
+package id.tokokita.catalog_service.product.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -6,8 +6,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
-public record ProductRequest(
+public record ProductUpdateRequest(
         @NotBlank @Size(max = 100) String name,
         @NotNull @PositiveOrZero BigDecimal price,
-        @NotBlank String category) {
-}
+        @NotBlank String category,
+        @NotNull Long version) {}

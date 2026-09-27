@@ -1,5 +1,8 @@
 package id.tokokita.catalog_service.product;
 
+import id.tokokita.catalog_service.product.dto.ProductCreateRequest;
+import id.tokokita.catalog_service.product.dto.ProductResponse;
+import id.tokokita.catalog_service.product.dto.ProductUpdateRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -24,24 +27,24 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> findAll() {
+    public List<ProductResponse> findAll() {
         return productService.findAll();
     }
 
     @GetMapping("/{id}")
-    public Product getById(@PathVariable Long id) {
+    public ProductResponse getById(@PathVariable Long id) {
         return productService.getById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Product create(@Valid @RequestBody ProductRequest request) {
-        return productService.create(request.name(), request.price(), request.category());
+    public ProductResponse create(@Valid @RequestBody ProductCreateRequest request) {
+        return productService.create(request);
     }
 
     @PutMapping("/{id}")
-    public Product update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
-        return productService.update(id, request.name(), request.price(), request.category());
+    public ProductResponse update(@PathVariable Long id, @Valid @RequestBody ProductUpdateRequest request) {
+        return productService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
